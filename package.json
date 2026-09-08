@@ -1,0 +1,34 @@
+{
+  "name": "youtube-downloader-idm",
+  "version": "1.0.0",
+  "description": "Native YouTube Video Downloader with IDM-inspired queue and Google Material UI",
+  "main": "electron/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev:vite": "vite",
+    "dev:electron": "wait-on http://127.0.0.1:5173 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -k -r \"npm run dev:vite\" \"npm run dev:electron\"",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.4.5",
+    "@mui/material": "^6.4.5",
+    "ffmpeg-static": "^5.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "shaka-player": "^5.2.9",
+    "yt-dlp-exec": "^1.0.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^34.2.0",
+    "vite": "^6.2.0",
+    "wait-on": "^8.0.2"
+  }
+}
