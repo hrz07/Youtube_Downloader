@@ -136,47 +136,7 @@ export default function DownloadQueue({
             <Tab label={`${t ? t('tabFailed') : 'Failed / Cancelled'} (${failedCount})`} />
           </Tabs>
 
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<FolderOpenIcon />}
-            onClick={onOpenFolder}
-            sx={{
-              ml: 1,
-              borderRadius: '6px',
-              borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#dadce0',
-              color: 'text.primary',
-              fontSize: '0.82rem',
-              '&:hover': {
-                borderColor: isDark ? '#60a5fa' : '#1a73e8',
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f3f4',
-              },
-            }}
-          >
-            {t ? t('openFolderBtn') : 'Downloads Folder'}
-          </Button>
 
-          {onPlayLocalFile && (
-            <Button
-              size="small"
-              variant="outlined"
-              startIcon={<VideoLibraryOutlinedIcon />}
-              onClick={onPlayLocalFile}
-              sx={{
-                ml: 1,
-                borderRadius: '6px',
-                borderColor: isDark ? 'rgba(255,255,255,0.15)' : '#dadce0',
-                color: 'text.primary',
-                fontSize: '0.82rem',
-                '&:hover': {
-                  borderColor: isDark ? '#4ade80' : '#16a34a',
-                  backgroundColor: isDark ? 'rgba(74, 222, 128, 0.08)' : 'rgba(22, 163, 74, 0.06)',
-                },
-              }}
-            >
-              {t ? t('btnPlayLocalMedia') : 'Play Local Video'}
-            </Button>
-          )}
         </Box>
       </Box>
 
