@@ -171,7 +171,7 @@ export default function AboutModal({ open, onClose, t }) {
             mb: 0.5,
           }}
         >
-          {t ? t('aboutTitle') : 'YouTube Downloader'}
+          {t ? t('aboutTitle') : 'Parrot'}
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>

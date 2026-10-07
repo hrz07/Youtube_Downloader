@@ -110,7 +110,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    title: 'YouTube Downloader',
+    title: 'Parrot',
     icon: path.join(__dirname, '../public/favicon.png'),
     backgroundColor: '#f8fafd',
     webPreferences: {

@@ -1,7 +1,7 @@
 {
-  "name": "youtube-downloader-idm",
+  "name": "parrot",
   "version": "1.0.0",
-  "description": "Native YouTube Video Downloader with IDM-inspired queue and Google Material UI",
+  "description": "Universal Video Downloader with IDM-inspired queue and Google Material UI",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
