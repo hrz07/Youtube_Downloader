@@ -1,4 +1,4 @@
-# 🎬 YouTube Downloader (IDM Edition)
+# 🎬 Parrot
 
 <div align="center">
 
@@ -10,7 +10,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 <p align="center">
-  <strong>A high-performance, modern desktop YouTube downloader built with Electron, React, and Material-UI.</strong><br>
+  <strong>A high-performance, modern universal desktop video downloader built with Electron, React, and Material-UI.</strong><br>
   Featuring an <em>Internet Download Manager (IDM)</em>-inspired multi-stream queue, in-app media player with HTTP Range streaming, resume support, and up to 4K Ultra HD & 320kbps audio extraction.
 </p>
 
@@ -31,7 +31,7 @@
 
 ## 🌟 Overview
 
-**YouTube Downloader (IDM Edition)** bridges the gap between raw CLI power and sleek, intuitive user experience. Unlike web-based downloaders filled with intrusive ads and bitrate caps, this app runs locally on your machine, leveraging the battle-tested **`yt-dlp`** core and **`FFmpeg`** engine to deliver maximum download speeds, pristine quality up to 4K UHD, and granular download control.
+**Parrot** bridges the gap between raw CLI power and sleek, intuitive user experience. Unlike web-based downloaders filled with intrusive ads and bitrate caps, this app runs locally on your machine, leveraging the battle-tested **`yt-dlp`** core and **`FFmpeg`** engine to deliver maximum download speeds, pristine quality up to 4K UHD, and granular download control across thousands of websites.
 
 Designed with **Google Material Design (MUI v6)** and enhanced with smooth glassmorphic elements, dynamic dark/light theme switching, and multi-language support, it provides a desktop downloading experience reminiscent of classic power tools like Internet Download Manager (IDM).
 
@@ -48,6 +48,7 @@ Designed with **Google Material Design (MUI v6)** and enhanced with smooth glass
 ### 🎯 Video & Audio Capabilities
 - **Resolutions up to 4K**: Download in **4K (2160p)**, **2K (1440p)**, **1080p Full HD**, **720p HD**, **480p**, and **360p**.
 - **High-Bitrate Audio Extraction**: Extract clean, high-fidelity MP3/M4A audio tracks (up to **320 kbps VBR**) directly from any video or music track.
+- **Universal Support**: Downloads videos from YouTube, Twitter, Vimeo, Reddit, and thousands of other platforms, as well as direct `.mp4`, `.zip`, `.pdf` and other generic file links via a native high-speed Node.js stream.
 - **Automatic Stream Merging**: Automatically combines adaptive high-res video streams (DASH) with separate high-quality audio streams into single, universally compatible `.mp4` containers via bundled FFmpeg.
 - **URL Sanitization & Clean-up**: Automatically strips unnecessary tracker tags, playlists, and radio mix parameters. Seamlessly handles `youtube.com/watch?v=...`, `youtu.be/...`, and `youtube.com/shorts/...` links.
 
@@ -62,6 +63,7 @@ Designed with **Google Material Design (MUI v6)** and enhanced with smooth glass
 - **Dynamic Favicon**: Adapts its color profile to match your browser and OS theme for high visibility.
 - **Audio Completion Chimes**: Subtle, pleasant audio notification chime whenever a download completes (can be tested or toggled in Settings).
 - **Desktop System Integration**: Quick-access buttons to "Open Downloads Folder" or reveal specific files in Windows Explorer / macOS Finder.
+- **Dynamic File Icons**: Shows customized UI icons for different downloaded file types (MP4, MP3, PDF, ZIP, Images, etc.) natively in the download queue.
 
 ### 🌐 Multi-Language Support (i18n)
 Full localization support with one-click dynamic language switcher:
@@ -171,7 +173,7 @@ npm start
 
 ## 📖 How It Works
 
-1. **Paste Link**: Copy any YouTube video, Shorts, or audio URL and paste it into the search bar (or use the convenient 📋 clipboard paste button).
+1. **Paste Link**: Copy any video URL (YouTube, Twitter, Vimeo, etc.) or a direct file URL (e.g. `.mp4`, `.zip`) and paste it into the search bar (or use the convenient 📋 clipboard paste button).
 2. **Analyze**: Click **Analyze**. The app parses the metadata, extracts available video heights and formats, and displays the video title, channel name, duration, and thumbnail preview.
 3. **Select Quality**: Pick your desired resolution from the dropdown menu (from 360p up to 4K Ultra HD, or Audio Only).
 4. **Download**: Hit **Download Now**. The job is added to the IDM queue with real-time transfer telemetry.
