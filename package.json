@@ -10,7 +10,8 @@
     "dev": "concurrently -k -r \"npm run dev:vite\" \"npm run dev:electron\"",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "electron ."
+    "start": "electron .",
+    "package": "npm run build && electron-builder --win --x64"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -28,7 +29,25 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron": "^34.2.0",
+    "electron-builder": "^26.15.3",
     "vite": "^6.2.0",
     "wait-on": "^8.0.2"
-  }
+  },
+  "build": {
+    "appId": "com.hrz07.kookaburra",
+    "productName": "Kookaburra",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "public/favicon.png",
+      "artifactName": "Kookaburra.exe"
+    },
+    "asarUnpack": [
+      "node_modules/yt-dlp-exec/**/*",
+      "node_modules/ffmpeg-static/**/*"
+    ]
+  },
+  "author": "Hrz07"
 }
