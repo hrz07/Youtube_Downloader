@@ -3,8 +3,20 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { execSync } = require('child_process');
-const ytDlp = require('yt-dlp-exec');
-const ffmpegStatic = require('ffmpeg-static');
+let ytDlp = require('yt-dlp-exec');
+let ffmpegPath = require('ffmpeg-static');
+
+// Fix binary paths when running from packaged ASAR
+if (app.isPackaged) {
+  const unpackedYtDlp = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'yt-dlp-exec', 'bin', 'yt-dlp.exe');
+  if (fs.existsSync(unpackedYtDlp)) {
+    ytDlp = ytDlp.create(unpackedYtDlp);
+  }
+  const unpackedFfmpeg = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffmpeg-static', 'ffmpeg.exe');
+  if (fs.existsSync(unpackedFfmpeg)) {
+    ffmpegPath = unpackedFfmpeg;
+  }
+}
 
 // Internal local HTTP streaming server for smooth media playback (with Range header support)
 let mediaServerPort = 0;
@@ -477,8 +489,8 @@ function executeDownloadProcess(payload, isResume = false) {
       continue: true, // Enable resuming partial downloads
     };
 
-    if (ffmpegStatic) {
-      flags.ffmpegLocation = ffmpegStatic;
+    if (ffmpegPath) {
+      flags.ffmpegLocation = ffmpegPath;
     }
 
     if (isAudioOnly) {
