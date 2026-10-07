@@ -18,6 +18,7 @@ import HighQualityIcon from '@mui/icons-material/HighQuality';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 // Format duration seconds to HH:MM:SS or MM:SS
 function formatDuration(sec) {
@@ -230,6 +231,8 @@ export default function VideoPreviewCard({ videoInfo, onStartDownload, t }) {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           {res.type === 'audio' ? (
                             <MusicNoteIcon fontSize="small" sx={{ color: '#188038' }} />
+                          ) : res.type === 'file' ? (
+                            <InsertDriveFileIcon fontSize="small" sx={{ color: '#5f6368' }} />
                           ) : (
                             <HighQualityIcon
                               fontSize="small"

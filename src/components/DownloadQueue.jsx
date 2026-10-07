@@ -32,6 +32,7 @@ import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 export default function DownloadQueue({
   downloads,
@@ -262,6 +263,8 @@ export default function DownloadQueue({
                             />
                           ) : item.isAudioOnly ? (
                             <MusicNoteIcon sx={{ color: isDark ? '#4ade80' : '#188038', fontSize: 26 }} />
+                          ) : item.resolution === 'direct' ? (
+                            <InsertDriveFileIcon sx={{ color: isDark ? '#9ca3af' : '#4b5563', fontSize: 26 }} />
                           ) : (
                             <MovieIcon sx={{ color: isDark ? '#60a5fa' : '#1a73e8', fontSize: 26 }} />
                           )}

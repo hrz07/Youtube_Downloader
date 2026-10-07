@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -168,7 +168,13 @@ app.on('window-all-closed', () => {
   // Terminate any remaining active downloads before quitting
   for (const [id, proc] of activeDownloads.entries()) {
     try {
-      proc.kill('SIGKILL');
+      if (proc.subprocess) {
+        if (proc.subprocess.pid) {
+          proc.subprocess.kill('SIGKILL');
+        } else if (typeof proc.subprocess.abort === 'function') {
+          proc.subprocess.abort();
+        }
+      }
     } catch (_) {}
   }
   activeDownloads.clear();
@@ -201,6 +207,68 @@ function cleanYouTubeUrl(inputUrl) {
   return trimmed;
 }
 
+// Helper: format bytes
+function formatBytes(bytes) {
+  if (!bytes || isNaN(bytes)) return 'Unknown size';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Helper: Check URL with HEAD request
+function analyzeDirectUrl(url) {
+  return new Promise((resolve) => {
+    try {
+      const request = net.request({ url, method: 'HEAD', redirect: 'follow' });
+      const timeout = setTimeout(() => {
+        request.abort();
+        resolve({ error: 'Timeout' });
+      }, 5000);
+
+      request.on('response', (response) => {
+        clearTimeout(timeout);
+        let contentType = '';
+        if (response.headers['content-type']) {
+          contentType = Array.isArray(response.headers['content-type'])
+            ? response.headers['content-type'][0]
+            : response.headers['content-type'];
+        }
+        
+        let contentLength = 0;
+        if (response.headers['content-length']) {
+          const cl = Array.isArray(response.headers['content-length'])
+            ? response.headers['content-length'][0]
+            : response.headers['content-length'];
+          contentLength = parseInt(cl, 10);
+        }
+
+        let contentDisposition = '';
+        if (response.headers['content-disposition']) {
+          contentDisposition = Array.isArray(response.headers['content-disposition'])
+            ? response.headers['content-disposition'][0]
+            : response.headers['content-disposition'];
+        }
+
+        // net module in electron might not expose final URL directly if redirected
+        resolve({
+          statusCode: response.statusCode,
+          contentType: contentType.toLowerCase(),
+          contentLength,
+          contentDisposition,
+        });
+      });
+      request.on('error', (err) => {
+        clearTimeout(timeout);
+        resolve({ error: err.message });
+      });
+      request.end();
+    } catch (err) {
+      resolve({ error: err.message });
+    }
+  });
+}
+
 // IPC Handler: Get Video Information
 ipcMain.handle('get-video-info', async (_event, url) => {
   try {
@@ -209,6 +277,59 @@ ipcMain.handle('get-video-info', async (_event, url) => {
     }
 
     const cleanUrl = cleanYouTubeUrl(url);
+
+    // 1. First, check if this is a direct file link (bypass yt-dlp)
+    const headInfo = await analyzeDirectUrl(cleanUrl);
+    if (!headInfo.error && headInfo.statusCode >= 200 && headInfo.statusCode < 400) {
+      const isHtml = headInfo.contentType.includes('text/html');
+      
+      // If it's not HTML, we treat it as a direct file download
+      if (!isHtml) {
+        let filename = 'downloaded_file';
+        if (headInfo.contentDisposition) {
+          const match = headInfo.contentDisposition.match(/filename="?([^"]+)"?/i);
+          if (match && match[1]) filename = match[1];
+        }
+        if (filename === 'downloaded_file') {
+          try {
+            const parsedUrl = new URL(cleanUrl);
+            const base = path.basename(parsedUrl.pathname);
+            if (base && base.includes('.')) filename = base;
+          } catch (_) {}
+        }
+        
+        // Remove trailing url parameters from filename if any
+        let safeFilename = filename.split('?')[0];
+        try {
+          safeFilename = decodeURIComponent(safeFilename);
+        } catch (_) {}
+        filename = safeFilename;
+        
+        const sizeLabel = formatBytes(headInfo.contentLength);
+
+        return {
+          success: true,
+          data: {
+            id: 'direct_' + Date.now(),
+            title: filename,
+            channel: new URL(cleanUrl).hostname,
+            duration: 0,
+            thumbnail: null,
+            webpageUrl: cleanUrl,
+            resolutions: [
+              {
+                resolution: 'direct',
+                label: `Direct File (${sizeLabel})`,
+                type: 'file',
+                height: 0
+              }
+            ],
+          },
+        };
+      }
+    }
+
+    // 2. Not a direct file (or HEAD failed), proceed with yt-dlp to analyze page
 
     // Call yt-dlp to get video metadata with timeout
     const fetchMetadataPromise = ytDlp(cleanUrl, {
@@ -511,10 +632,16 @@ function resolveDownloadedFilePath(downloadsDir, safeTitle, fileTag, isAudioOnly
           return;
         }
         console.error('Download error:', err);
+        
+        let errorMsg = err.message || 'Download failed or was interrupted.';
+        if (errorMsg.includes('HTTP Error 474') || errorMsg.includes('HTTP Error 410') || errorMsg.includes('4XX Client Error')) {
+          errorMsg = 'The site blocked the download (Error 474/410). It has updated its anti-bot protection (like Cloudflare tokens) and is actively rejecting the connection. A yt-dlp engine update will be required to download from this specific site again.';
+        }
+
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('download-error', {
             id,
-            error: err.message || 'Download failed or was interrupted.',
+            error: errorMsg,
           });
         }
       });
@@ -527,8 +654,182 @@ function resolveDownloadedFilePath(downloadsDir, safeTitle, fileTag, isAudioOnly
   }
 }
 
+function handleDirectError(id, err) {
+  const record = activeDownloads.get(id);
+  if (record && (record.isPaused || record.isCancelled)) return;
+  activeDownloads.delete(id);
+  console.error('Direct download error:', err);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('download-error', {
+      id,
+      error: err.message || 'Direct download failed.',
+    });
+  }
+}
+
+// Helper to execute native download process for direct files
+function executeDirectDownloadProcess(payload, isResume = false) {
+  const { id, url, title } = payload;
+  const downloadsDir = app.getPath('downloads');
+  const safeTitle = sanitizeFilename(title || 'file');
+  let finalPath = path.join(downloadsDir, safeTitle);
+  let partPath = finalPath + '.part';
+
+  let startBytes = 0;
+  if (isResume && fs.existsSync(partPath)) {
+    startBytes = fs.statSync(partPath).size;
+  } else if (!isResume) {
+    let counter = 1;
+    let base = safeTitle;
+    let ext = '';
+    const lastDot = safeTitle.lastIndexOf('.');
+    if (lastDot > 0) {
+      base = safeTitle.substring(0, lastDot);
+      ext = safeTitle.substring(lastDot);
+    }
+    while (fs.existsSync(finalPath)) {
+      finalPath = path.join(downloadsDir, `${base} (${counter})${ext}`);
+      counter++;
+    }
+    partPath = finalPath + '.part';
+    
+    if (fs.existsSync(partPath)) {
+      try { fs.unlinkSync(partPath); } catch(_) {}
+    }
+  }
+
+  const record = {
+    subprocess: null,
+    payload,
+    savedFilePath: partPath,
+    isPaused: false,
+    isCancelled: false,
+  };
+  activeDownloads.set(id, record);
+
+  try {
+    const request = net.request({ url, method: 'GET', redirect: 'follow' });
+    if (startBytes > 0) {
+      request.setHeader('Range', `bytes=${startBytes}-`);
+    }
+
+    record.subprocess = request;
+
+    request.on('response', (response) => {
+      if (record.isPaused || record.isCancelled) {
+        request.abort();
+        return;
+      }
+
+      if (startBytes > 0 && response.statusCode !== 206) {
+        startBytes = 0;
+      }
+
+      let totalSize = 0;
+      if (response.headers['content-length']) {
+        const cl = Array.isArray(response.headers['content-length'])
+          ? response.headers['content-length'][0]
+          : response.headers['content-length'];
+        totalSize = parseInt(cl, 10) + startBytes;
+      }
+      
+      const totalSizeStr = totalSize > 0 ? formatBytes(totalSize) : 'Unknown';
+      const fileStream = fs.createWriteStream(partPath, { flags: startBytes > 0 ? 'a' : 'w' });
+      
+      let downloaded = startBytes;
+      let lastTime = Date.now();
+      let lastDownloaded = downloaded;
+
+      response.on('data', (chunk) => {
+        if (record.isPaused || record.isCancelled) {
+          request.abort();
+          fileStream.close();
+          return;
+        }
+        
+        fileStream.write(chunk);
+        downloaded += chunk.length;
+
+        const now = Date.now();
+        if (now - lastTime >= 500) {
+          const diffBytes = downloaded - lastDownloaded;
+          const diffSecs = (now - lastTime) / 1000;
+          const speedBps = diffBytes / diffSecs;
+          const speedStr = formatBytes(speedBps) + '/s';
+          
+          let etaStr = '--:--';
+          if (totalSize > 0 && speedBps > 0) {
+            const remSecs = Math.max(0, (totalSize - downloaded) / speedBps);
+            const m = Math.floor(remSecs / 60).toString().padStart(2, '0');
+            const s = Math.floor(remSecs % 60).toString().padStart(2, '0');
+            etaStr = `${m}:${s}`;
+          }
+
+          let percent = 0;
+          if (totalSize > 0) {
+            percent = (downloaded / totalSize) * 100;
+          }
+
+          if (mainWindow && !mainWindow.isDestroyed() && !record.isPaused && !record.isCancelled) {
+            mainWindow.webContents.send('download-progress', {
+              id,
+              progress: percent,
+              speed: speedStr,
+              eta: etaStr,
+              totalSize: totalSizeStr,
+              status: percent >= 100 ? 'completed' : 'downloading',
+            });
+          }
+
+          lastTime = now;
+          lastDownloaded = downloaded;
+        }
+      });
+
+      response.on('end', () => {
+        fileStream.close();
+        if (record.isPaused || record.isCancelled) return;
+
+        try {
+          fs.renameSync(partPath, finalPath);
+          record.savedFilePath = finalPath;
+        } catch(e) {
+          console.error("Rename failed", e);
+        }
+
+        activeDownloads.delete(id);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('download-complete', {
+            id,
+            filePath: finalPath,
+          });
+        }
+      });
+
+      response.on('error', (err) => {
+        fileStream.close();
+        handleDirectError(id, err);
+      });
+    });
+
+    request.on('error', (err) => {
+      handleDirectError(id, err);
+    });
+
+    request.end();
+
+    return { success: true, id };
+  } catch (err) {
+    handleDirectError(id, err);
+    return { success: false, error: err.message };
+  }
+}
+
 // IPC Handler: Start Download
 ipcMain.handle('start-download', async (_event, payload) => {
+  if (payload.resolution === 'direct') {
+    return executeDirectDownloadProcess(payload, false);
+  }
   return executeDownloadProcess(payload, false);
 });
 
@@ -537,8 +838,12 @@ ipcMain.handle('pause-download', async (_event, id) => {
   const record = activeDownloads.get(id);
   if (record) {
     record.isPaused = true;
-    if (record.subprocess && record.subprocess.pid) {
-      killProcessTree(record.subprocess.pid);
+    if (record.subprocess) {
+      if (record.subprocess.pid) {
+        killProcessTree(record.subprocess.pid);
+      } else if (typeof record.subprocess.abort === 'function') {
+        record.subprocess.abort();
+      }
       record.subprocess = null;
     }
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -562,8 +867,16 @@ ipcMain.handle('resume-download', async (_event, payload) => {
   if (!downloadPayload) {
     return { success: false, error: 'Download details missing' };
   }
-  if (existing && existing.subprocess && existing.subprocess.pid) {
-    killProcessTree(existing.subprocess.pid);
+  if (existing && existing.subprocess) {
+    if (existing.subprocess.pid) {
+      killProcessTree(existing.subprocess.pid);
+    } else if (typeof existing.subprocess.abort === 'function') {
+      existing.subprocess.abort();
+    }
+  }
+  
+  if (downloadPayload.resolution === 'direct') {
+    return executeDirectDownloadProcess(downloadPayload, true);
   }
   return executeDownloadProcess(downloadPayload, true);
 });
@@ -573,8 +886,12 @@ ipcMain.handle('cancel-download', async (_event, id) => {
   const record = activeDownloads.get(id);
   if (record) {
     record.isCancelled = true;
-    if (record.subprocess && record.subprocess.pid) {
-      killProcessTree(record.subprocess.pid);
+    if (record.subprocess) {
+      if (record.subprocess.pid) {
+        killProcessTree(record.subprocess.pid);
+      } else if (typeof record.subprocess.abort === 'function') {
+        record.subprocess.abort();
+      }
       record.subprocess = null;
     }
     const fileToRemove = record.savedFilePath;
