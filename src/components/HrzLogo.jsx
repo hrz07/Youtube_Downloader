@@ -91,7 +91,7 @@ export default function HrzLogo() {
           fontFamily: '"Google Sans", "Roboto", -apple-system, sans-serif',
         }}
       >
-        Parrot
+        Kookaburra
       </Typography>
     </Box>
   );

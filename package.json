@@ -1,5 +1,5 @@
 {
-  "name": "parrot",
+  "name": "kookaburra",
   "version": "1.0.0",
   "description": "Universal Video Downloader with IDM-inspired queue and Google Material UI",
   "main": "electron/main.cjs",

@@ -1,4 +1,4 @@
-# 🎬 Parrot
+# 🎬 Kookaburra
 
 <div align="center">
 
@@ -31,7 +31,7 @@
 
 ## 🌟 Overview
 
-**Parrot** bridges the gap between raw CLI power and sleek, intuitive user experience. Unlike web-based downloaders filled with intrusive ads and bitrate caps, this app runs locally on your machine, leveraging the battle-tested **`yt-dlp`** core and **`FFmpeg`** engine to deliver maximum download speeds, pristine quality up to 4K UHD, and granular download control across thousands of websites.
+**Kookaburra** bridges the gap between raw CLI power and sleek, intuitive user experience. Unlike web-based downloaders filled with intrusive ads and bitrate caps, this app runs locally on your machine, leveraging the battle-tested **`yt-dlp`** core and **`FFmpeg`** engine to deliver maximum download speeds, pristine quality up to 4K UHD, and granular download control across thousands of websites.
 
 Designed with **Google Material Design (MUI v6)** and enhanced with smooth glassmorphic elements, dynamic dark/light theme switching, and multi-language support, it provides a desktop downloading experience reminiscent of classic power tools like Internet Download Manager (IDM).
 
