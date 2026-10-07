@@ -1,6 +1,6 @@
 {
   "name": "kookaburra",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Universal Video Downloader with IDM-inspired queue and Google Material UI",
   "main": "electron/main.cjs",
   "type": "module",

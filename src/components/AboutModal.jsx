@@ -177,7 +177,7 @@ export default function AboutModal({ open, onClose, t }) {
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
           <Chip
             size="small"
-            label="v1.1.0"
+            label="v1.1.1"
             sx={{
               height: 22,
               fontSize: '0.72rem',
