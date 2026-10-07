@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const { execSync } = require('child_process');
+const { autoUpdater } = require('electron-updater');
 let ytDlp = require('yt-dlp-exec');
 let ffmpegPath = require('ffmpeg-static');
 
@@ -170,6 +171,13 @@ function createWindow() {
 
 app.whenReady().then(() => {
   createWindow();
+
+  // Check for GitHub releases and notify user automatically
+  if (app.isPackaged) {
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+      console.error('Failed to check for updates:', err);
+    });
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

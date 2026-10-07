@@ -18,6 +18,7 @@
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.5",
     "@mui/material": "^6.4.5",
+    "electron-updater": "^6.8.9",
     "ffmpeg-static": "^5.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -47,6 +48,13 @@
     "asarUnpack": [
       "node_modules/yt-dlp-exec/**/*",
       "node_modules/ffmpeg-static/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hrz07",
+        "repo": "Youtube_Downloader"
+      }
     ]
   },
   "author": "Hrz07"
